@@ -6,7 +6,7 @@ import (
 	"math/rand"
 	"path"
 
-	"github.com/colinmarc/hdfs"
+	"github.com/colinmarc/hdfs/v2"
 )
 
 type Options struct {
@@ -20,6 +20,13 @@ type Options struct {
 	Width int // how many dirs per dir
 
 	RandomFanout bool // randomize fanout numbers
+
+	/*
+		Keeping these around just in case
+		Keytab    string // string containing the keytab
+		Principal string // string containing for the keytab
+		Realm     string // string containing the realm
+	*/
 }
 
 var FilenameSize = 16

@@ -4,9 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"time"
 
-	randomfiles "github.com/Galzzly/loadgenerator"
-	"github.com/colinmarc/hdfs"
+	lg "github.com/Galzzly/loadgenerator"
+	"github.com/Galzzly/loadgenerator/randomfiles"
 )
 
 var usage = `Usage: %s [OPTIONS] <path>
@@ -28,6 +29,12 @@ func init() {
 	flag.IntVar(&opts.Depth, "depth", 3, "depth - how deep to you want the directory tree")
 	flag.IntVar(&opts.Width, "width", 2, "width - number of subdirectories per directory")
 	flag.IntVar(&opts.Files, "files", 15, "files - total number of files")
+	/*
+		Keeping these areound just in case
+		flag.StringVar(&opts.Keytab, "keytab", "", "path to the keytab file")
+		flag.StringVar(&opts.Principal, "principal", "", "the principal to use with the keytab")
+		flag.StringVar(&opts.Realm, "realm", "", "the realm to use with the keytab")
+	*/
 }
 
 func parseArgs() error {
@@ -39,21 +46,33 @@ func parseArgs() error {
 		os.Exit(0)
 	}
 
+	/*
+		Want to check for the presence of either of the os env variables:
+			HADOOP_HOME
+			HADOOP_CONF_DIR
+		If neither are set, then set HADOOP_HOME to the standard location
+		of `/etc/hadoop`
+
+		This will save the user having to launc using:
+			HADOOP_HOME=/etc/hadoop ./loadgenerator {path}
+	*/
+	if os.Getenv("HADOOP_HOME") == "" && os.Getenv("HADOOP_CONF_DIR") == "" {
+		if e := os.Setenv("HADOOP_HOME", "/etc/hadoop"); e != nil {
+			return e
+		}
+	}
+
 	return nil
 }
 
-func run() {
-	/*
-		Launch the HDFS client connection.
-		Not passing a connection string will attempt to find the details from
-		config files
-	*/
-	client, e := hdfs.Client("") // Should get the connection from the config files
+func run() error {
+	client, e := lg.ConnectToNamenode()
 	if e != nil {
 		return e
 	}
 
 	for _, root := range paths {
+		fmt.Printf("Generating tree for %s ...", root)
 		if e := client.MkdirAll(root, 0755); e != nil {
 			return e
 		}
@@ -62,20 +81,24 @@ func run() {
 		if e != nil {
 			return e
 		}
+		fmt.Println("Done")
 	}
+
 	return nil
 }
 
 func main() {
+	start := time.Now()
 	// Parse the arguments
 	if e := parseArgs(); e != nil {
 		fmt.Fprintln(os.Stderr, "Error:", e)
 		os.Exit(1)
 	}
 
-	// Let's start then
 	if e := run(); e != nil {
 		fmt.Fprintln(os.Stderr, "Error:", e)
 		os.Exit(1)
 	}
+
+	fmt.Println("Time Taken:", time.Since(start))
 }
