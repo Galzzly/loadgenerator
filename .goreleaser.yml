@@ -12,12 +12,9 @@ builds:
     binary: loadgenerator
     goos:
       - linux
-  - env:
-      - CGO_ENABLED=0
 archives:
   - format: binary
-  - replacements:
-      linux: Linux
+    name_template: "loadgenerator_{{ .Version }}"
 checksum:
   disable: true
 snapshot:
