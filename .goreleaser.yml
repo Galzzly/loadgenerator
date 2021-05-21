@@ -12,6 +12,8 @@ builds:
     binary: loadgenerator
     goos:
       - linux
+    goarch:
+      - amd64
 archives:
   - format: binary
     name_template: "loadgenerator"
